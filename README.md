@@ -23,4 +23,25 @@ The data is updated twice a month with an update in the first week of the month 
 - Bucket versioning disabled
 - Default Encryption: SSE-S3 (Server-side encryption with Amazon S3 managed keys
 - Bucket Key enabled
+
+### Project Structure
+
+- `src/`
+  - python ingestion scripts 
+- `infra/`
+  - infrastructure configuration
+- `notebooks/`
+  - future data exploration and analysis
+
+### Environment Setup
+
+Configured:
+- `.env` file for API key management
+- `requirements.txt` for Python dependencies
+
+### Python Dependencies
+
+- requests
+- boto3
+- python-dotenv
     
