@@ -1,0 +1,8 @@
+requests
+## call API
+
+boto3
+## AWS/S3 access
+
+python-dotenv
+## load API key from .env
