@@ -14,7 +14,7 @@ This dataset contains monthly generation, emissions and demand data for 88 geogr
 
 The data is updated twice a month with an update in the first week of the month followed by a second update in the third week of the month.
 
-## Project Progress
+## Project Progress 20260519
 ### Initial Infrastructure Setup
 - Created initial AWS S3 raw data bucket
 - Region: eu-central-1 (Frankfurt)
@@ -44,4 +44,22 @@ Configured:
 - requests
 - boto3
 - python-dotenv
+
+## Project Progress 20260520
+- Set up a local Python development environment using a virtual environment (.venv)
+- Configured dependency management with requirements.txt
+- Implemented an ingestion pipeline for the Ember Energy API
+- Successfully connected to the Ember API using an API key stored securely in a .env file
+- Retrieved monthly electricity generation data for selected countries and technologies
+- Stored raw API responses locally in JSON format following a data lake folder structure
+- Added detailed code comments and documentation for maintainability
+- Configured .gitignore to exclude:
+  - local raw data files
+  - environment variables and secrets
+  - virtual environments
+  - temporary and log files
+- Cleaned the Git repository by removing tracked local data and sensitive files
+- Successfully tested the ingestion script with HTTP Status Code 200
+- Pushed the updated project structure and ingestion pipeline to GitHub
+
     
