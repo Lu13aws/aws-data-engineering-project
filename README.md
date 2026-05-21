@@ -82,9 +82,31 @@ The data is updated twice a month with an update in the first week of the month 
   - year/month partitions
 - Successfully uploaded Ember electricity generation data to the S3 raw bucket
 - Validated uploaded objects directly inside the AWS S3 Console
+- S3 object structure: raw/ember/electricity_generation/monthly/year=2026/month=04/
 
-#### S3 Object Structure
-raw/ember/electricity_generation/monthly/year=2026/month=04/
+Created/configured IAM role for AWS Glue permissions
+role name: 
+- GlueETLRole-EmberEnergyProject
+permissions:
+- AmazonS3FullAccess
+- AWSGlueServiceRole
+- CloudWatchLogFullAccess
+
+Created first AWS Glue ETL Job:
+- EmberGlueETLJob-v1
+
+Configured ETL workflow:
+Amazon S3 Raw Source
+- Transform Raw Energy Data
+- Amazon S3 Processed Target
+
+Configured processed output:
+- Format: Parquet
+- Compression: Snappy
+
+Processed Data Target
+- Configured Glue target location in Processed S3 bucket for analytics-ready datasets.
+
 
 
 
