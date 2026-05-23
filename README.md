@@ -124,9 +124,30 @@ Processed Data Target
 Successfully queried processed parquet dataset using Amazon Athena.
 
 Observation: The current dataset still contains nested JSON/object structures inside the `stats` column. Next step:
-Flatten nested API response structures into analytics-ready relational columns using AWS Glue transformations.
+Explode and Flatten nested API response structures into analytics-ready relational columns using AWS Glue transformations.
 
+Data Transformation Improvements
 
+Observation
+The initial processed dataset still contained nested JSON structures inside the `data` column, which made analytical querying in Amazon Athena difficult.
+
+Solution
+To transform the nested API response into an analytics-ready tabular structure, the AWS Glue ETL pipeline was updated with additional transformation steps:
+
+1. **Explode Array Or Map Into Rows**
+   - The nested `data` array from the Ember API response was exploded into individual records.
+   - A new column named `record` was created for each array element.
+
+2. **Flatten Transformation**
+   - The nested fields inside the `record` object were flattened into relational columns.
+   - Example output columns:
+     - `record.entity`
+     - `record.entity_code`
+     - `record.date`
+     - `record.series`
+
+Result
+The processed dataset can now be queried efficiently in Amazon Athena using standard SQL statements instead of working with nested JSON structures.
 
 
 
