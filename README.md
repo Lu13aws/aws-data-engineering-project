@@ -114,6 +114,12 @@ Processed Data Target
 - Validated IAM permissions and Glue runtime configuration
 - Confirmed end-to-end ETL pipeline functionality
 
+### 20260523
+- Created AWS Glue Crawler (`EmberProcessedDataCrawler`)
+- Connected crawler to processed Parquet dataset
+- Created Glue Data Catalog database (`ember_energy_db`)
+- Automatically generated catalog table from processed data
+
 
 
 
