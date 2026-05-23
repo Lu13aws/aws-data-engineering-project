@@ -120,6 +120,12 @@ Processed Data Target
 - Created Glue Data Catalog database (`ember_energy_db`)
 - Automatically generated catalog table from processed data
 
+### 20260523
+Successfully queried processed parquet dataset using Amazon Athena.
+
+Observation: The current dataset still contains nested JSON/object structures inside the `stats` column. Next step:
+Flatten nested API response structures into analytics-ready relational columns using AWS Glue transformations.
+
 
 
 
