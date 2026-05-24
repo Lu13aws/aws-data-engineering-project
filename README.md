@@ -149,7 +149,20 @@ To transform the nested API response into an analytics-ready tabular structure, 
 Result
 The processed dataset can now be queried efficiently in Amazon Athena using standard SQL statements instead of working with nested JSON structures.
 
+### 20260524
+Expanded Dataset Ingestion & Athena Validation
 
+API Ingestion Improvements
+- Updated the Ember API ingestion script to request larger datasets across multiple countries and energy generation series.
+- Extended API parameters:
+  - Multiple `entity_code` values
+  - Multiple `series` values
+  - Expanded historical date range
+
+S3 Raw Layer Improvements
+- Implemented dynamic S3 partition-style prefixes using extraction dates:
+  ```text
+  raw/ember/electricity_generation/monthly/extraction_date=YYYY-MM-DD/
 
 
     
