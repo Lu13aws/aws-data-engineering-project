@@ -36,9 +36,9 @@ def main():
 
     # Define query parameters for the Ember API request
     params = {
-        "entity_code": ["DEU", "FRA", "CHE"],  # Germany, France, Switzerland
-        "series": ["Solar", "Wind"],          # Electricity generation sources
-        "start_date": "2025-04",
+        "entity_code": "DEU,FRA,CHE,ITA,ESP,POL,BEL,NLD",  # Countries
+        "series": "Solar,Wind,Hydro,Bioenergy,Nuclear,Coal,Gas",          # Electricity generation sources
+        "start_date": "2020-01",
         "end_date": "2026-04",
         "is_aggregate_series": "false",
         "api_key": api_key                    # Ember expects the API key as query parameter
@@ -86,7 +86,7 @@ def main():
     # Define S3 object key
     s3_key = (
         "raw/ember/electricity_generation/monthly/"
-        "year=2026/month=04/"
+        f"extraction_date={datetime.now() .strftime('%Y-%m-%d')}/"
         f"{file_path.name}"
     )
 
