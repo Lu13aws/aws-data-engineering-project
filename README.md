@@ -164,5 +164,22 @@ S3 Raw Layer Improvements
   ```text
   raw/ember/electricity_generation/monthly/extraction_date=YYYY-MM-DD/
 
+### 20260524
+Data Quality Validation:
+The processed dataset was validated using Amazon Athena SQL queries.
+
+Validation checks included:
+- null value detection
+- duplicate record detection
+- date range validation
+- record count verification
+
+During validation, duplicate records were identified due to overlapping ingestion batches stored in different S3 raw partitions. The issue was resolved by cleaning obsolete raw and processed files and rerunning the Glue ETL pipeline and rerunning the Glue Crawler Job.
+
+Final validation confirmed:
+- no duplicate records
+- valid date formats
+- successful ingestion and transformation pipeline execution
+
 
     
