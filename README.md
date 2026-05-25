@@ -181,5 +181,29 @@ Final validation confirmed:
 - valid date formats
 - successful ingestion and transformation pipeline execution
 
+### 20260525
+Dashboard Progress Update
 
-    
+Today, the AWS QuickSight dashboard was successfully connected to the processed energy dataset stored in Amazon S3 and queried through Amazon Athena.
+
+Completed Features
+- Configured AWS QuickSight access permissions
+- Connected Athena and S3 datasets to QuickSight
+- Fixed date formatting issues in the dataset preparation step
+- Created interactive line chart visualizing European energy production trends
+- Added dynamic filters:
+  - Country filter
+  - Energy source filter
+- Built KPI cards for:
+  - Total Energy Production (TWh)
+  - Number of Countries
+  - Number of Energy Sources
+- Improved dashboard layout and visual organization
+- Published the first dashboard version in Amazon QuickSight
+
+Current Dashboard Insights
+The dashboard currently allows users to:
+- Explore energy generation trends over time
+- Compare different energy sources
+- Filter by specific countries and energy categories
+- View high-level production metrics   
