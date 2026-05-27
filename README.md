@@ -206,4 +206,27 @@ The dashboard currently allows users to:
 - Explore energy generation trends over time
 - Compare different energy sources
 - Filter by specific countries and energy categories
-- View high-level production metrics   
+- View high-level production metrics
+
+### 20260527
+Data Pipeline Improvements — Partitioned Processing & Automated Orchestration
+
+Implemented major improvements to the AWS-based energy data pipeline:
+
+Key Enhancements
+Added partitioned Parquet storage in Amazon S3
+Partitioning by:
+  - year
+  - month
+Optimized Glue ETL processing using PySpark transformations
+Converted raw JSON data into compressed Parquet format
+Integrated `AWS Step Functions` for orchestration
+Automated:
+- Glue ETL Job execution
+- Glue Crawler execution
+- Refreshed QuickSight SPICE datasets successfully
+
+Validated data quality (manually):
+- no duplicates
+- no null values
+- count rows
