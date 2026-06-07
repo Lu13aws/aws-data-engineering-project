@@ -1,42 +1,251 @@
-﻿## Project Description: 
-Part of this project is the retrieval, ingestion, transformation and analysis of data using certain AWS services. This file documents my AWS data engineering journey.
+## Project Description
 
-### Project Structure
+Batch energy analytics pipeline built on AWS using the Ember Monthly Electricity API.
+The system ingests monthly electricity generation data for 8 European countries, transforms it through AWS Glue into columnar Parquet, and visualizes production trends and energy mix through an Amazon QuickSight dashboard.
 
-- `src/`
-  - python ingestion scripts 
-- `infra/`
-  - infrastructure configuration
-- `notebooks/`
-  - future data exploration and analysis
+---
 
-### Environment Setup
+## Project Structure
 
-Configured:
-- `.env` file for API key management
-- `requirements.txt` for Python dependencies
+```
+aws-data-engineering-project/
+├── src/           # Python ingestion scripts
+├── infra/         # Infrastructure-as-code (placeholder)
+├── notebooks/     # Exploratory analysis (placeholder)
+├── data/          # Local raw data (gitignored)
+│   └── raw/ember/electricity_generation/monthly/
+├── skills/        # Reusable skill documentation (10 skills)
+├── .env           # Local secrets (gitignored)
+├── .gitignore
+├── requirements.txt
+└── README.md
+```
 
-### Python Dependencies
+---
 
-- requests
-- boto3
-- python-dotenv
+## Final Architecture
 
+| Service | Role |
+|---------|------|
+| Amazon S3 | Raw and processed data lake (two buckets) |
+| AWS Glue ETL | JSON → Parquet transformation with Explode + Flatten |
+| AWS Glue Crawler | Auto-discovers schema from processed Parquet |
+| AWS Glue Data Catalog | Central metadata store (`ember_energy_db`) |
+| Amazon Athena | SQL validation and ad-hoc analytics |
+| Amazon QuickSight | Interactive dashboard: stacked area chart, KPI cards, geographic map |
 
-### AWS Budget Plan
-Created budget plan on aws. set monthly budget = 50 US Dollar
+---
 
-## Network Diagramm
+## Final Data Flow
+
+```
+Ember Energy API
+→ Python Ingestion Script (src/ingest_ember_data.py)
+→ Amazon S3 Raw Bucket (JSON, partitioned by extraction_date=YYYY-MM-DD)
+→ AWS Glue ETL Job (EmberGlueETLJob-v1)
+   → Explode Array Or Map Into Rows
+   → Flatten Nested Fields
+   → Parquet / Snappy output
+→ Amazon S3 Processed Bucket
+→ AWS Glue Crawler (EmberProcessedDataCrawler)
+→ AWS Glue Data Catalog (ember_energy_db)
+→ Amazon Athena (SQL validation + analytics)
+→ Amazon QuickSight Dashboard
+```
+
+### Network Diagram
 https://miro.com/app/board/uXjVHS6eY4g=/?moveToWidget=3458764672103169096&cot=14
 
+---
+
+## Service Setup
+
+### Amazon S3
+
+Two buckets, both in `eu-central-1` (Frankfurt).
+
+**Raw bucket:** `ember-energy-raw-data-v1-759302162548-eu-central-1-an`
+
+| Setting | Value |
+|---------|-------|
+| Block all public access | On |
+| ACLs | Disabled (bucket owner enforced) |
+| Versioning | Off |
+| Default encryption | SSE-S3 |
+| Bucket Key | On |
+
+**S3 partition structure:**
+```
+raw/ember/electricity_generation/monthly/extraction_date=YYYY-MM-DD/<filename>.json
+```
+
+### IAM Role
+
+**Role name:** `GlueETLRole-EmberEnergyProject`
+
+Attached policies:
+- `AmazonS3FullAccess`
+- `AWSGlueServiceRole`
+- `CloudWatchLogsFullAccess`
+
+Trust policy: allows `glue.amazonaws.com` to assume the role.
+
+### AWS Glue ETL Job
+
+**Job name:** `EmberGlueETLJob-v1`
+
+Transform pipeline:
+1. Amazon S3 Raw Source (JSON)
+2. Explode Array Or Map Into Rows — expands `data[]` array into individual `record` rows
+3. Flatten — promotes `record.*` fields to top-level columns (`record.entity`, `record.date`, etc.)
+4. Amazon S3 Processed Target
+
+Output: Parquet format, Snappy compression.
+
+### AWS Glue Crawler
+
+**Crawler name:** `EmberProcessedDataCrawler`
+
+- Source: processed S3 bucket prefix
+- Target database: `ember_energy_db`
+- Schedule: on demand
+- Run after each ETL job execution to update the catalog table
+
+### Amazon Athena
+
+- Data source: `AwsDataCatalog`
+- Database: `ember_energy_db`
+- Query results stored in a dedicated S3 results bucket
+- Used for data quality validation after each pipeline run
+
+### Amazon QuickSight
+
+1. Security & Permissions → authorize QuickSight to access Amazon Athena and both S3 buckets
+2. New dataset → Athena → select `ember_energy_db` and the catalog table
+3. In the dataset editor: change the date column type from string to `Date` with format `yyyy-MM-dd`
+4. Import to SPICE for faster dashboard queries
+5. Publish dashboard with interactive Country and Energy Source filter controls
+
+---
+
+## Environment Setup
+
+Create a `.env` file at the project root with:
+
+```
+EMBER_API_KEY=
+S3_RAW_BUCKET=
+AWS_REGION=
+```
+
+Install dependencies and run:
+
+```bash
+pip install -r requirements.txt
+python src/ingest_ember_data.py
+```
+
+Requires AWS credentials configured locally (`aws configure` or `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` environment variables).
+
+---
+
 ## Data Source
-this project uses the Ember Monthly Electricity Dataset:
+
+This project uses the Ember Monthly Electricity Dataset:
 https://ember-energy.org/data/monthly-electricity-data/
-This dataset contains monthly generation, emissions and demand data for 88 geographies representing more than 90% of global power demand. Data is collected from multi-country datasets (EIA, Eurostat, Energy Institute) as well as national sources (e.g China data from the National Bureau of Statistics).
+
+This dataset contains monthly generation, emissions and demand data for 88 geographies representing more than 90% of global power demand. Data is collected from multi-country datasets (EIA, Eurostat, Energy Institute) as well as national sources (e.g. China data from the National Bureau of Statistics).
 
 The data is updated twice a month with an update in the first week of the month followed by a second update in the third week of the month.
 
-## Project Progress 
+**Countries ingested:** DEU, FRA, CHE, ITA, ESP, POL, BEL, NLD
+
+**Energy sources:** Solar, Wind, Hydro, Bioenergy, Nuclear, Coal, Gas
+
+**Metrics:** `generation_twh` (absolute output), `share_of_generation_pct` (% of total mix)
+
+**Date range:** 2020-01 to 2026-04
+
+---
+
+## AWS Budget
+
+Monthly budget cap: $50 USD (configured in AWS Budgets).
+
+---
+
+## Challenges & Fixes
+
+### Nested JSON Not Queryable in Athena
+
+**Symptom:** After the first Glue ETL run, Athena returned struct-typed columns (`array<struct<...>>`) instead of scalar values. Standard SQL queries like `SELECT entity FROM table` failed.
+
+**Root cause:** The Ember API response wraps all records inside a `data` array. Glue wrote this array as-is into Parquet without expanding it, so the `data` column remained a nested struct.
+
+**Fix:**
+1. Glue Studio → open `EmberGlueETLJob-v1`
+2. Add transform: **Explode Array Or Map Into Rows** — source column `data`, output column `record`
+3. Add transform: **Flatten** — promotes `record.entity`, `record.date`, etc. to top-level columns
+4. Save and re-run the job
+5. Delete old processed files in S3, then re-run the Glue Crawler to refresh the catalog table
+
+---
+
+### Duplicate Records After Re-ingestion
+
+**Symptom:** Athena data quality check (`GROUP BY entity_code, date, series HAVING COUNT(*) > 1`) returned rows — duplicate records existed in the processed dataset.
+
+**Root cause:** Multiple ingestion runs wrote JSON files to different `extraction_date=` S3 partitions for the same time period. The Glue ETL job scanned all raw partitions and appended output to the processed bucket, producing duplicate rows.
+
+**Fix:**
+1. Delete all objects in the processed S3 bucket prefix
+2. Delete the corresponding Glue Data Catalog table
+3. Remove obsolete raw S3 partitions containing overlapping data
+4. Re-run `EmberGlueETLJob-v1` against the clean raw data
+5. Re-run `EmberProcessedDataCrawler` to regenerate the catalog table
+6. Re-validate in Athena — duplicate check should return zero rows
+
+---
+
+## Lessons Learned
+
+- Glue visual ETL does not auto-flatten nested API responses — Explode + Flatten transforms must be added explicitly for any JSON with a nested array
+- Hive-style partition keys (`extraction_date=YYYY-MM-DD`) enable Athena partition pruning but also cause duplicate data if overlapping date ranges are re-ingested without clearing the processed layer first
+- QuickSight silently breaks time-axis charts when date columns are typed as strings — always change to `Date` with format `yyyy-MM-dd` in the dataset editor before importing
+- QuickSight's Athena and S3 access permissions are configured inside QuickSight's own Security & Permissions console — they are separate from AWS IAM and easy to miss during initial setup
+
+---
+
+## Future Improvements
+
+### Infrastructure
+- Terraform or AWS CDK for all resources (currently all manual console setup)
+- Version-suffix resource names when schema changes (`EmberGlueETLJob-v2`, `ember-index-v2`)
+
+### Orchestration
+- AWS EventBridge Scheduler or Apache Airflow to automate ingestion + ETL on a monthly cadence
+- CloudWatch alarms for Glue job failures and data freshness SLA breaches
+
+### Analytics
+- Jupyter notebooks in `notebooks/` for exploratory analysis and statistical summaries
+- Athena saved queries for reusable data quality checks
+
+### Data
+- Expand to more countries or time periods
+- Ingest Ember demand and emissions datasets alongside generation data
+
+### Dashboards
+- Additional QuickSight sheets: year-over-year comparison, renewable share trend
+- Embed dashboard in a web application using QuickSight embedding API
+
+### ML Extensions
+- Anomaly detection on monthly generation using SageMaker or OpenSearch ML
+- Forecast next 6 months of generation per energy source
+
+---
+
+## Project Progress
+
 ### 20260519
 #### Initial Infrastructure Setup
 - Created initial AWS S3 raw data bucket
@@ -44,7 +253,7 @@ The data is updated twice a month with an update in the first week of the month 
 - Public access blocked
 - ACL (Access Control List) disabled
 - Bucket versioning disabled
-- Default Encryption: SSE-S3 (Server-side encryption with Amazon S3 managed keys
+- Default Encryption: SSE-S3 (Server-side encryption with Amazon S3 managed keys)
 - Bucket Key enabled
 
 ### 20260520
@@ -85,8 +294,9 @@ The data is updated twice a month with an update in the first week of the month 
 - S3 object structure: raw/ember/electricity_generation/monthly/year=2026/month=04/
 
 Created/configured IAM role for AWS Glue permissions
-role name: 
+role name:
 - GlueETLRole-EmberEnergyProject
+
 permissions:
 - AmazonS3FullAccess
 - AWSGlueServiceRole
@@ -163,6 +373,7 @@ S3 Raw Layer Improvements
 - Implemented dynamic S3 partition-style prefixes using extraction dates:
   ```text
   raw/ember/electricity_generation/monthly/extraction_date=YYYY-MM-DD/
+  ```
 
 ### 20260524
 Data Quality Validation:
@@ -206,27 +417,4 @@ The dashboard currently allows users to:
 - Explore energy generation trends over time
 - Compare different energy sources
 - Filter by specific countries and energy categories
-- View high-level production metrics
-
-### 20260527
-Data Pipeline Improvements — Partitioned Processing & Automated Orchestration
-
-Implemented major improvements to the AWS-based energy data pipeline:
-
-Key Enhancements
-Added partitioned Parquet storage in Amazon S3
-Partitioning by:
-  - year
-  - month
-Optimized Glue ETL processing using PySpark transformations
-Converted raw JSON data into compressed Parquet format
-Integrated `AWS Step Functions` for orchestration
-Automated:
-- Glue ETL Job execution
-- Glue Crawler execution
-- Refreshed QuickSight SPICE datasets successfully
-
-Validated data quality (manually):
-- no duplicates
-- no null values
-- count rows
+- View high-level production metrics   
